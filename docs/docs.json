@@ -64,7 +64,8 @@
         "group": "Features",
         "pages": [
           "features/checkpoint-forking",
-          "features/additional-histories"
+          "features/additional-histories",
+          "features/mcp-rl"
         ]
       },
       {
@@ -76,7 +77,8 @@
       {
         "group": "Tutorials",
         "pages": [
-          "tutorials/summarizer"
+          "tutorials/summarizer",
+          "tutorials/open-deep-research"
         ]
       },
       {
