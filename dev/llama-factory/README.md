@@ -105,6 +105,25 @@ Switching datasets
 - To use ONLINE HF datasets, set `dataset_dir: ONLINE` and replace the list under `dataset:` with your dataset name(s).
 - For local JSON/JSONL/Parquet, point `dataset_dir` to your data folder and set `dataset:` accordingly. See LLaMA‑Factory docs for schema/columns.
 
+Qwen3-235B (8×H200, ZeRO-3 sharded)
+
+- Use `configs/qwen3_235b_lora_zero3.yaml` for LoRA SFT on `Qwen/Qwen3-235B-A22B-Instruct-2507`.
+- DeepSpeed Stage-3 config lives at `configs/deepspeed_zero3_235b.json`; model shards across all 8 GPUs instead of replicating.
+- Example launch (adjust dataset + logging paths):
+  ```bash
+  cd dev/llama-factory
+  . .venv/bin/activate  # or your env
+  mkdir -p ../../logs \
+  CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
+  torchrun --nproc_per_node=8 --standalone --master_port=29500 \
+    $(pwd)/.venv/bin/llamafactory-cli train configs/qwen3_235b_lora_zero3.yaml \
+    2>&1 | tee ../../logs/llf_qwen3_235b_8g_zero3.log
+  ```
+- The config keeps LoRA targets to attention/router weights to avoid instantiating adapters for every MoE expert.
+  Increase `max_steps`, `max_samples`, and swap in your dataset before real runs.
+- Expect peak GPU memory ~70–80 GiB per H200 for bf16 + ZeRO-3; disable CPU offload or tune JSON buckets if you see stalls.
+- Ensure `nvcc` is available (or set `CUDA_HOME` accordingly) so DeepSpeed can load its prebuilt CUDA ops before launch.
+
 Quantization (optional)
 
 - The YAML contains commented QLoRA lines (`quantization_method: bnb`, etc.). To enable 4‑bit QLoRA:
