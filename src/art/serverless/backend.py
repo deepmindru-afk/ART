@@ -4,8 +4,6 @@ import os
 
 from art.client import Client
 from art.utils.deploy_model import LoRADeploymentJob, LoRADeploymentProvider
-from wandb.sdk.wandb_run import Run
-from weave.trace.weave_client import WeaveClient
 
 from .. import dev
 from ..backend import Backend
@@ -23,8 +21,6 @@ class ServerlessBackend(Backend):
         client = Client(api_key=api_key, base_url=base_url)
         super().__init__(base_url=str(client.base_url))
         self._client = client
-        self._wandb_runs: dict[str, Run] = {}
-        self._weave_clients: dict[str, WeaveClient] = {}
 
     async def close(self) -> None:
         await self._client.close()
