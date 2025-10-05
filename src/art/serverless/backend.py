@@ -157,7 +157,9 @@ class ServerlessBackend(Backend):
                 elif event.type == "training_ended":
                     return
                 elif event.type == "training_failed":
-                    error_message = event.data.get("error_message", "Training failed with an unknown error")
+                    error_message = event.data.get(
+                        "error_message", "Training failed with an unknown error"
+                    )
                     raise RuntimeError(f"Training job failed: {error_message}")
                 after = event.id
 
