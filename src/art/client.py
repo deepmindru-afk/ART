@@ -291,7 +291,7 @@ class TrainingJobs(AsyncAPIResource):
 
 class TrainingJobEvent(BaseModel):
     id: str
-    type: Literal["training_started", "gradient_step", "training_ended"]
+    type: Literal["training_started", "gradient_step", "training_ended", "training_failed"]
     data: dict[str, Any]
 
 
