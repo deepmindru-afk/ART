@@ -1,7 +1,20 @@
+import inspect
 import os
-from typing import Any, Iterable, Literal, TypedDict, cast
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Iterable,
+    Literal,
+    ParamSpec,
+    TypedDict,
+    TypeVar,
+    cast,
+    overload,
+)
 
 import httpx
+import tenacity
 from openai import AsyncOpenAI, BaseModel, _exceptions
 from openai._base_client import AsyncAPIClient, AsyncPaginator, make_request_options
 from openai._compat import cached_property
@@ -11,11 +24,67 @@ from openai._types import NOT_GIVEN, NotGiven, Omit
 from openai._utils import is_mapping, maybe_transform
 from openai._version import __version__
 from openai.pagination import AsyncCursorPage
-from openai.resources.files import AsyncFiles  # noqa: F401
-from openai.resources.models import AsyncModels  # noqa: F401
 from typing_extensions import override
 
 from .trajectories import TrajectoryGroup
+
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
+@overload
+def retry_status_codes(fn: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]: ...
+
+
+@overload
+def retry_status_codes(fn: Callable[P, R]) -> Callable[P, R]: ...
+
+
+def retry_status_codes(
+    fn: Callable[P, R] | Callable[P, Awaitable[R]],
+) -> Callable[P, R] | Callable[P, Awaitable[R]]:
+    def _is_retryable_status(exc: BaseException) -> bool:
+        if isinstance(exc, _exceptions.APIStatusError):
+            response = exc.response
+            if response is not None:
+                status = response.status_code
+                return status in {429, *range(500, 600)}
+        return False
+
+    if inspect.iscoroutinefunction(fn):
+        async_fn = cast(Callable[P, Awaitable[R]], fn)
+
+        async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            async for attempt in tenacity.AsyncRetrying(
+                stop=tenacity.stop_after_attempt(3),
+                wait=tenacity.wait_random_exponential(multiplier=0.5, max=2.0),
+                retry=tenacity.retry_if_exception(_is_retryable_status),
+                reraise=True,
+            ):
+                with attempt:
+                    return await async_fn(*args, **kwargs)
+
+            # Unreachable if tenacity produces at least one attempt
+            raise RuntimeError("retry attempt sequence unexpectedly exhausted")
+
+        return async_wrapper
+
+    sync_fn = cast(Callable[P, R], fn)
+
+    def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        for attempt in tenacity.Retrying(
+            stop=tenacity.stop_after_attempt(3),
+            wait=tenacity.wait_random_exponential(multiplier=0.5, max=2.0),
+            retry=tenacity.retry_if_exception(_is_retryable_status),
+            reraise=True,
+        ):
+            with attempt:
+                return sync_fn(*args, **kwargs)
+
+        # Unreachable if tenacity produces at least one attempt
+        raise RuntimeError("retry attempt sequence unexpectedly exhausted")
+
+    return sync_wrapper
 
 
 class Model(BaseModel):
@@ -113,6 +182,7 @@ class Models(AsyncAPIResource):
 
 
 class Checkpoints(AsyncAPIResource):
+    @retry_status_codes
     def list(
         self,
         *,
@@ -137,6 +207,7 @@ class Checkpoints(AsyncAPIResource):
             model=Checkpoint,
         )
 
+    @retry_status_codes
     async def delete(
         self, *, model_id: str, steps: Iterable[int]
     ) -> DeleteCheckpointsResponse:
@@ -174,6 +245,7 @@ class TrainingJobs(AsyncAPIResource):
 
 
 class TrainingJobEvents(AsyncAPIResource):
+    @retry_status_codes
     def list(
         self,
         *,
