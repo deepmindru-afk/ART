@@ -21,28 +21,32 @@ Train multi-step agents for real-world tasks using GRPO.
 
 </div>
 
-## 📏 RULER: Zero-Shot Agent Rewards
+## 🚀 W&B Training: Serverless RL
 
-**RULER** (Relative Universal LLM-Elicited Rewards) eliminates the need for hand-crafted reward functions by using an LLM-as-judge to automatically score agent trajectories. Simply define your task in the system prompt, and RULER handles the rest—**no labeled data, expert feedback, or reward engineering required**.
+**W&B Training (Serverless RL)** is the first publicly available service for flexibly training models with reinforcement learning. It manages your training and inference infrastructure automatically, letting you focus on defining your data, environment and reward function—leading to faster feedback cycles, lower costs, and far less DevOps.
 
 ✨ **Key Benefits:**
 
-- **2-3x faster development** - Skip reward function engineering entirely
-- **General-purpose** - Works across any task without modification
-- **Strong performance** - Matches or exceeds hand-crafted rewards in 3/4 benchmarks
-- **Easy integration** - Drop-in replacement for manual reward functions
+- **40% lower cost** - Multiplexing on shared production-grade inference cluster
+- **28% faster training** - Scale to 2000+ concurrent requests across many GPUs
+- **Zero infra headaches** - Fully managed infrastructure that stays healthy
+- **Instant deployment** - Every checkpoint instantly available via W&B Inference
 
 ```python
-# Before: Hours of reward engineering
-def complex_reward_function(trajectory):
-    # 50+ lines of careful scoring logic...
-    pass
+# Before: Hours of GPU setup and infra management
+# RuntimeError: CUDA error: out of memory 😢
 
-# After: One line with RULER
-judged_group = await ruler_score_group(group, "openai/o3")
+# After: Serverless RL with instant feedback
+from art import ServerlessBackend
+
+backend = ServerlessBackend(
+    model_id="qwen/Qwen2.5-14B",
+    api_key="your_wandb_api_key"
+)
+# Edit and iterate in minutes, not hours!
 ```
 
-[📖 Learn more about RULER →](https://art.openpipe.ai/fundamentals/ruler)
+[📖 Learn more about W&B Training →](https://docs.wandb.ai/guides/training)
 
 ## ART Overview
 
