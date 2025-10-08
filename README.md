@@ -37,7 +37,7 @@ Train multi-step agents for real-world tasks using GRPO.
 # RuntimeError: CUDA error: out of memory 😢
 
 # After: Serverless RL with instant feedback
-from art import ServerlessBackend
+from art.serverless.backend import ServerlessBackend
 
 backend = ServerlessBackend(
     model_id="qwen/Qwen2.5-14B",
