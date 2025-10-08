@@ -13,24 +13,19 @@ load_dotenv()
 
 random.seed(42)
 
-STEPS = 50
+STEPS = 1000
 GENERATE_BENCHMARKS = False
 
-parser = argparse.ArgumentParser(description="Train a model to play Tic-Tac-Toe")
-
-args = parser.parse_args()
-
-
-async def main_0():
+async def main_0(api_key: str, entity: str, project: str, model_name: str):
     backend = ServerlessBackend(
         base_url="https://api.training.wandb.ai/v1",
-        # base_url="http://166.19.34.97:8000/v1",
-        api_key=os.environ["WANDB_API_KEY"],
+        api_key=api_key,
     )
 
     model = art.TrainableModel(
-        name="agent-006",
-        project="tic-tac-toe",
+        name=model_name,
+        project=project,
+        entity=entity,
         base_model="Qwen/Qwen2.5-14B-Instruct",
     )
 
@@ -142,6 +137,30 @@ async def main_1():
     print(len(results))
 
 
-if __name__ == "__main__":
-    asyncio.run(main_0())
+# Determine whether to run first or second from CLI argument
+parser = argparse.ArgumentParser(description="Train a model to play Tic-Tac-Toe")
+parser.add_argument("--run-first", action="store_true", help="Run the first model")
+parser.add_argument("--run-second", action="store_true", help="Run the second model")
+parser.add_argument("--run-third", action="store_true", help="Run the third model")
+parser.add_argument("--run-fourth", action="store_true", help="Run the fourth model")
+
+
+
+args = parser.parse_args()
+
+if args.run_first:
+    asyncio.run(main_0(api_key=os.environ["WANDB_API_KEY"], entity="davidcorbittihs-test-guides", project="tic-tac-toe", model_name="ageng-007"))
+if args.run_second:
+    asyncio.run(main_0(api_key=os.environ["WANDB_API_KEY_2"], entity="wandb", project="tic-tac-toe-2", model_name="agent-008"))
+if args.run_third:
+    asyncio.run(main_0(api_key=os.environ["WANDB_API_KEY"], entity="wandb", project="davidcorbittihs-test-guide", model_name="agent-009"))
+if args.run_fourth:
+    asyncio.run(main_0(api_key=os.environ["WANDB_API_KEY_2"], entity="wandb", project="tic-tac-toe-2", model_name="agent-010"))
+
+
+
+# if __name__ == "__main__":
+    # asyncio.run(main_0(api_key=os.environ["WANDB_API_KEY"], entity="davidcorbittihs-test-guide", project="tic-tac-toe"))
+    # asyncio.run(main_0(api_key=os.environ["WANDB_API_KEY_2"], entity="wandb", project="tic-tac-toe-2"))
     # asyncio.run(main_1())
+    # asyncio.run(main())
