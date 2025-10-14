@@ -315,12 +315,16 @@ class LocalBackend(Backend):
                 if running_requests == 0 and pending_requests == 0:
                     try:
                         # Send a health check with a 5 second timeout
-                        await openai_client.completions.create(
-                            model=model_name,
-                            prompt="Hi",
-                            max_tokens=1,
-                            timeout=5,
+                        timeout = float(
+                            os.environ.get("ART_SERVER_MONITOR_TIMEOUT", 5.0)
                         )
+                        # Send a health check with a 5 second timeout
+                        await openai_client.models.retrieve(
+                            model=model_name,
+                            timeout=timeout,
+                        )
+                        # get the completion response, exit the loop
+                        break
                     except Exception as e:
                         # If the server is sleeping, a failed health check is okay
                         if await self._services[model_name].vllm_engine_is_sleeping():

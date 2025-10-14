@@ -6,7 +6,6 @@ from pydantic import BaseModel
 from typing_extensions import Never
 
 from . import dev
-from .openai import patch_openai
 from .trajectories import Trajectory, TrajectoryGroup
 from .types import TrainConfig
 
@@ -55,6 +54,8 @@ class Model(
 
     name: str
     project: str
+    entity: str | None = None
+    id: str | None = None
     config: ModelConfig
     # Discriminator field for FastAPI serialization
     trainable: bool = False
@@ -77,6 +78,8 @@ class Model(
         *,
         name: str,
         project: str,
+        entity: str | None = None,
+        id: str | None = None,
         config: ModelConfig | None = None,
         inference_api_key: str | None = None,
         inference_base_url: str | None = None,
@@ -86,6 +89,7 @@ class Model(
         super().__init__(
             name=name,
             project=project,
+            entity=entity,
             config=config,
             inference_api_key=inference_api_key,
             inference_base_url=inference_base_url,
@@ -99,6 +103,8 @@ class Model(
         *,
         name: str,
         project: str,
+        entity: str | None = None,
+        id: str | None = None,
         config: None = None,
         inference_api_key: str | None = None,
         inference_base_url: str | None = None,
@@ -111,6 +117,8 @@ class Model(
         *,
         name: str,
         project: str,
+        entity: str | None = None,
+        id: str | None = None,
         config: ModelConfig,
         inference_api_key: str | None = None,
         inference_base_url: str | None = None,
@@ -167,7 +175,7 @@ class Model(
                 raise ValueError(
                     "In order to create an OpenAI client you must provide an `inference_api_key` and `inference_base_url`."
                 )
-        openai_client = AsyncOpenAI(
+        self._openai_client = AsyncOpenAI(
             base_url=self.inference_base_url,
             api_key=self.inference_api_key,
             http_client=DefaultAsyncHttpxClient(
@@ -177,9 +185,6 @@ class Model(
                 ),
             ),
         )
-        patch_openai(openai_client)
-        self._openai_client = openai_client
-
         return self._openai_client
 
     def litellm_completion_params(self) -> dict:
@@ -254,6 +259,8 @@ class TrainableModel(Model[ModelConfig], Generic[ModelConfig]):
         *,
         name: str,
         project: str,
+        entity: str | None = None,
+        id: str | None = None,
         config: ModelConfig | None = None,
         base_model: str,
         _internal_config: dev.InternalModelConfig | None = None,
@@ -262,6 +269,8 @@ class TrainableModel(Model[ModelConfig], Generic[ModelConfig]):
         super().__init__(
             name=name,
             project=project,
+            entity=entity,
+            id=id,
             config=config,
             base_model=base_model,  # type: ignore
             **kwargs,
@@ -276,6 +285,8 @@ class TrainableModel(Model[ModelConfig], Generic[ModelConfig]):
         *,
         name: str,
         project: str,
+        entity: str | None = None,
+        id: str | None = None,
         config: None = None,
         base_model: str,
         _internal_config: dev.InternalModelConfig | None = None,
@@ -287,6 +298,8 @@ class TrainableModel(Model[ModelConfig], Generic[ModelConfig]):
         *,
         name: str,
         project: str,
+        entity: str | None = None,
+        id: str | None = None,
         config: ModelConfig,
         base_model: str,
         _internal_config: dev.InternalModelConfig | None = None,
@@ -327,7 +340,11 @@ class TrainableModel(Model[ModelConfig], Generic[ModelConfig]):
         # code (and any user code) can create an OpenAI client immediately.
         self.inference_base_url = base_url
         self.inference_api_key = api_key
-        self.inference_model_name = self.name
+        self.inference_model_name = (
+            hasattr(backend, "_model_inference_name")
+            and getattr(backend, "_model_inference_name")(self)
+            or self.name
+        )
 
     async def get_step(self) -> int:
         """
