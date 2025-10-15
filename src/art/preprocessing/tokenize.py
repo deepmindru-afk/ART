@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from itertools import takewhile
 from typing import Generator, cast
 
+import torch
+from PIL import Image
 from transformers.image_processing_utils import BaseImageProcessor
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 
@@ -19,6 +21,8 @@ class TokenizedResult:
     input_pos: list[int]
     assistant_mask: list[int]
     logprobs: list[float]
+    pixel_values: torch.Tensor | None
+    image_grid_thw: torch.Tensor | None
     weight: float = 0.0
     prompt_id: int = 0
     prompt_length: int = 0
@@ -32,6 +36,8 @@ class TokenizedResult:
             input_pos=self.input_pos[self.prompt_length :],
             assistant_mask=self.assistant_mask[self.prompt_length :],
             logprobs=self.logprobs[self.prompt_length :],
+            pixel_values=None,
+            image_grid_thw=None,
             weight=self.weight,
             prompt_id=self.prompt_id,
             prompt_length=0,
@@ -228,8 +234,6 @@ def tokenize_trajectory(
             )
             assistant_mask[start:end] = [1] * len(token_logprobs)
     if image_processor:
-        from PIL import Image
-
         images: list[Image.Image] = []
         for message in messages_and_choices:
             if (
@@ -259,7 +263,11 @@ def tokenize_trajectory(
             token_ids[start:end] = [image_token_id] * num_image_tokens
             logprobs[start:end] = [float("nan")] * num_image_tokens
             assistant_mask[start:end] = [0] * num_image_tokens
-        raise ValueError("Stop here")
+        pixel_values = result["pixel_values"]
+        image_grid_thw = result["image_grid_thw"]
+    else:
+        pixel_values = None
+        image_grid_thw = None
     return TokenizedResult(
         advantage=advantage,
         chat=chat,
@@ -268,4 +276,6 @@ def tokenize_trajectory(
         input_pos=list(range(len(token_ids))),
         assistant_mask=assistant_mask,
         logprobs=logprobs,
+        pixel_values=pixel_values,
+        image_grid_thw=image_grid_thw,
     )

@@ -118,6 +118,12 @@ class UnslothService:
                                             for k, v in packed_tensors.items()
                                             if isinstance(v, torch.Tensor)
                                         },
+                                        pixel_values=packed_tensors["pixel_values"][
+                                            _offset : _offset + 1
+                                        ],
+                                        image_grid_thw=packed_tensors["image_grid_thw"][
+                                            _offset : _offset + 1
+                                        ],
                                         config=config,
                                         _config=_config,
                                         return_new_logprobs=True,
@@ -140,6 +146,12 @@ class UnslothService:
                                 for k, v in packed_tensors.items()
                                 if isinstance(v, torch.Tensor)
                             },
+                            pixel_values=packed_tensors["pixel_values"][
+                                offset : offset + 1
+                            ],
+                            image_grid_thw=packed_tensors["image_grid_thw"][
+                                offset : offset + 1
+                            ],
                             config=(
                                 config.model_copy(
                                     update={"lr": 1e-9, "beta": 0.0, "kl_coef": 0.0}
@@ -167,9 +179,9 @@ class UnslothService:
                     for task in done:
                         result = task.result()
                         # If `result` is `None`, the training task finished somehow.
-                        assert result is not None, (
-                            "The training task should never finish."
-                        )
+                        assert (
+                            result is not None
+                        ), "The training task should never finish."
                         self.results_queue.task_done()
                         if warmup:
                             from .state import gc_and_empty_cuda_cache
