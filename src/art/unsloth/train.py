@@ -69,6 +69,15 @@ def get_compute_loss_fn(trainer: "GRPOTrainer") -> Callable[..., torch.Tensor]:
                     # if param_group.get("weight_decay"):
                     #     param_group["weight_decay"] = config.weight_decay
 
+        if inputs["pixel_values"][0] is not None:
+            inputs["pixel_values"] = inputs["pixel_values"][0]  # type: ignore
+        else:
+            del inputs["pixel_values"]  # type: ignore
+        if inputs["image_grid_thw"][0] is not None:
+            inputs["image_grid_thw"] = inputs["image_grid_thw"][0]  # type: ignore
+        else:
+            del inputs["image_grid_thw"]  # type: ignore
+
         # Move tensors to the correct device
         inputs = {
             key: tensor.to(trainer.accelerator.device)  # type: ignore
@@ -110,10 +119,10 @@ def get_compute_loss_fn(trainer: "GRPOTrainer") -> Callable[..., torch.Tensor]:
         ), f"Sequence length ({seq_len}) must be evenly divisible by chunk size ({chunk_size})"
         os.environ["UNSLOTH_RETURN_HIDDEN_STATES"] = "1"
         forward_kwargs = {}
-        if inputs["pixel_values"][0] is not None:
-            forward_kwargs["pixel_values"] = inputs["pixel_values"][0]
-        if inputs["image_grid_thw"][0] is not None:
-            forward_kwargs["image_grid_thw"] = inputs["image_grid_thw"][0]
+        if "pixel_values" in inputs:
+            forward_kwargs["pixel_values"] = inputs["pixel_values"]  # type: ignore
+        if "image_grid_thw" in inputs:
+            forward_kwargs["image_grid_thw"] = inputs["image_grid_thw"]  # type: ignore
         new_logprobs, entropies = calculate_logprobs(
             dtype_for_autocasting,
             trainer,

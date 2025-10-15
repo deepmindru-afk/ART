@@ -194,8 +194,8 @@ def packed_tensors_from_dir(**kwargs: Unpack[DiskPackedTensors]) -> PackedTensor
             "weights": torch.float32,
         }.items()
     }
-    _add_tensor_list(packed_tensors, kwargs, "pixel_values")
-    _add_tensor_list(packed_tensors, kwargs, "image_grid_thw")
+    _add_tensor_list(packed_tensors, kwargs, "pixel_values", torch.float32)
+    _add_tensor_list(packed_tensors, kwargs, "image_grid_thw", torch.long)
     return cast(PackedTensors, packed_tensors)
 
 
@@ -203,6 +203,7 @@ def _add_tensor_list(
     packed_tensors: dict[str, Any],
     disk_packed_tensors: DiskPackedTensors,
     key: str,
+    dtype: torch.dtype,
 ) -> None:
     if info := disk_packed_tensors.get(key):
         packed_tensors[key] = []
@@ -211,7 +212,7 @@ def _add_tensor_list(
             f"{disk_packed_tensors['dir']}/{key}.pt",
             shared=True,
             size=offsets[-1] * inner_dim,
-            dtype=torch.float32,
+            dtype=dtype,
         ).view(-1, inner_dim)
         for start, end in zip(offsets[:-1], offsets[1:]):
             packed_tensors[key].append(
