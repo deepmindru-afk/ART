@@ -74,7 +74,7 @@ def message_or_choice_to_dict(message_or_choice: MessageOrChoice) -> dict[str, A
         item_dict.pop("logprobs")
 
     if "content" in item_dict and isinstance(item_dict["content"], Iterator):
-        item_dict["content"] = list(item_dict["content"])
+        item_dict["content"] = list(item_dict["content"])  # type: ignore
 
     return dict(item_dict)
 
