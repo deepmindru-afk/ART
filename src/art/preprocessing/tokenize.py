@@ -252,21 +252,25 @@ def tokenize_trajectory(
                 getattr(image_processor, "image_token", "<|image_pad|>")
             ),
         )
-        result = image_processor(images=images)
-        offset = 0
-        for num_image_tokens in (
-            image_grid_thw.prod().item()
-            // (getattr(image_processor, "merge_size", 1) ** 2)
-            for image_grid_thw in result["image_grid_thw"]
-        ):
-            start = token_ids.index(image_token_id, offset)
-            offset = start + num_image_tokens
-            end = start + 1
-            token_ids[start:end] = [image_token_id] * num_image_tokens
-            logprobs[start:end] = [float("nan")] * num_image_tokens
-            assistant_mask[start:end] = [0] * num_image_tokens
-        pixel_values = result["pixel_values"]
-        image_grid_thw = result["image_grid_thw"]
+        if images:
+            result = image_processor(images=images)
+            offset = 0
+            for num_image_tokens in (
+                image_grid_thw.prod().item()
+                // (getattr(image_processor, "merge_size", 1) ** 2)
+                for image_grid_thw in result["image_grid_thw"]
+            ):
+                start = token_ids.index(image_token_id, offset)
+                offset = start + num_image_tokens
+                end = start + 1
+                token_ids[start:end] = [image_token_id] * num_image_tokens
+                logprobs[start:end] = [float("nan")] * num_image_tokens
+                assistant_mask[start:end] = [0] * num_image_tokens
+            pixel_values = result["pixel_values"]
+            image_grid_thw = result["image_grid_thw"]
+        else:
+            pixel_values = None
+            image_grid_thw = None
     else:
         pixel_values = None
         image_grid_thw = None
