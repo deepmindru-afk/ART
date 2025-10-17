@@ -1,5 +1,5 @@
 import json
-from typing import Any, cast, Iterator
+from typing import Any, Iterator, cast
 
 import yaml
 
