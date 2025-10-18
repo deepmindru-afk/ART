@@ -117,8 +117,8 @@ def patch_lora_request() -> None:
     from unsloth_zoo.vllm_lora_request import LoRARequest as UnslothLoRARequest
     from vllm.lora.request import LoRARequest
 
-    LoRARequest.lora_tensors = {}  # type: ignore
-    LoRARequest.lora_embeddings = {}  # type: ignore
+    setattr(LoRARequest, "lora_tensors", {})  # type: ignore
+    setattr(LoRARequest, "lora_embeddings", {})  # type: ignore
     UnslothLoRARequest.tensorizer_config_dict = None  # type: ignore
 
 

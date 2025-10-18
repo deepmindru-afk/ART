@@ -1,4 +1,14 @@
-from typing import TYPE_CHECKING, Generic, Iterable, Optional, TypeVar, cast, overload
+from contextlib import asynccontextmanager
+from typing import (
+    TYPE_CHECKING,
+    AsyncIterator,
+    Generic,
+    Iterable,
+    Optional,
+    TypeVar,
+    cast,
+    overload,
+)
 
 import httpx
 from openai import AsyncOpenAI, DefaultAsyncHttpxClient
@@ -386,3 +396,21 @@ class TrainableModel(Model[ModelConfig], Generic[ModelConfig]):
             self, list(trajectory_groups), config, _config or {}, verbose
         ):
             pass
+
+    @asynccontextmanager
+    async def training_job(self) -> AsyncIterator["TrainingJob"]:
+        yield TrainingJob()
+
+
+import asyncio
+
+import torch
+
+
+class TrainingJob:
+    def pipelined_forwards(
+        self, mini_batches: list[list[dict]]
+    ) -> AsyncIterator[tuple[list[dict], torch.Tensor]]: ...
+    async def grpo_forward_backward(self, mini_batch: list[dict]) -> None: ...
+    async def forward(self, mini_batch: list[dict]) -> None: ...
+    def optim_step(self, learning_rate: float) -> asyncio.Task[None]: ...

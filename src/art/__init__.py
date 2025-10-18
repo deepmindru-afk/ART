@@ -29,6 +29,8 @@ except ImportError:
     pass
 
 
+from typing import Any
+
 from . import dev
 from .auto_trajectory import auto_trajectory, capture_auto_trajectory
 from .backend import Backend
@@ -39,6 +41,12 @@ from .trajectories import Trajectory, TrajectoryGroup
 from .types import Messages, MessagesAndChoices, Tools, TrainConfig
 from .utils import retry
 from .yield_trajectory import capture_yielded_trajectory, yield_trajectory
+
+
+def mini_batches(
+    trajectory_groups: list[TrajectoryGroup],
+) -> list[list[dict]]: ...
+
 
 __all__ = [
     "dev",
