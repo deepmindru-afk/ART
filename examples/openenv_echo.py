@@ -1,13 +1,10 @@
 # /// script
 # requires-python = ">=3.10"
 # dependencies = [
-#     "openenv",
-#     "openpipe-art",
-#     "weave",
+#     "openenv-core==0.1.13",
+#     "openpipe-art==0.5.1",
 # ]
 #
-# [tool.uv.sources]
-# openenv = { git = "https://github.com/meta-pytorch/OpenEnv.git", rev = "6083a47" }
 # ///
 import asyncio
 from datetime import datetime
